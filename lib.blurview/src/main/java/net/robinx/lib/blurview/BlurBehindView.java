@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnScrollChangedListener;
 import android.widget.RelativeLayout;
+import android.widget.HorizontalScrollView;
 import net.robinx.lib.blurview.processor.BlurProcessor;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class BlurBehindView extends RelativeLayout {
     public static final int UPDATE_CONTINOUSLY = 2;
     public static final int UPDATE_NEVER = 0;
     public static final int UPDATE_SCROLL_CHANGED = 1;
+    public static boolean BLUR_RENDER_TX = false;
     private float blurRadius = 8.0f;
     private BlurRender mBlurRender;
     private boolean clipCircleOutline = false;
@@ -194,6 +196,34 @@ public class BlurBehindView extends RelativeLayout {
             this.initRenderScript(getContext());
         }
 
+        private boolean cannotDrawParent(View parent) {
+            if (parent.getId() == this.blurView.getId()) {
+                // Do not draw the current blur view
+                return true;
+            }
+            if (parent instanceof HorizontalScrollView) {
+                // It is danagerous to call HorizontalScrollView.draw() as the
+                // method mutates layout in Android 4.x, which then computes
+                // the animated node values, and if the nodes are used in BlurView
+                // it would cause a recursion that is caught and an exception is thrown:
+                //
+                // W/System.err( 1611): Caused by: java.lang.IllegalStateException:
+                //   Looks like animated nodes graph has cycles,
+                //   there are 247 but toposort visited only 202.
+                return true;
+            }
+            if (parent instanceof ViewGroup) {
+                int childCount = ((ViewGroup)parent).getChildCount();
+                for (int i = 0; i < childCount; i++) {
+                    View child = ((ViewGroup)parent).getChildAt(i);
+                    if (cannotDrawParent(child)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    
         private boolean printViewsBehind(ViewGroup rootView) {
             if (rootView == this.blurView) { 
                 return true;
@@ -216,14 +246,14 @@ public class BlurBehindView extends RelativeLayout {
             boolean renderChildViews = rootView.getAlpha() != 0.0F && rootView.getVisibility() == View.VISIBLE;
             for (int i = 0; i < rootView.getChildCount(); ++i) {
                 View childView = rootView.getChildAt(i);
-                /* WEIRDNESS: findViewById checks if childView is equal to id to
-                 * however due to Android views being collapsed as an optimisation
-                 * layer in React Native, the findViewById method will return false
-                 * as the blur view may be a sibling, and not a child */
+                /* React Native Android views are being collapsed as an
+                 * optimisation, therefore we need to stop the recursive
+                 * search as soon as the current blur view is found, even
+                 * if it is a sibling */
                 if (childView.getId() == this.blurView.getId()) {
                     return true;
                 }
-                if (childView.findViewById(this.blurView.getId()) != null) {
+                if (this.cannotDrawParent(childView)) {
                     if (BuildConfig.DEBUG && (rootView instanceof BlurBehindView)) {
                         Log.w(TAG, "blur view is nesting another blur view");
                     }
@@ -406,6 +436,11 @@ public class BlurBehindView extends RelativeLayout {
         }
 
         private void drawToBitmap() {
+            if (BlurBehindView.BLUR_RENDER_TX) {
+                Log.i(TAG, "prevented blur rendering initiated by another blur");
+                // this.invalidate();
+                return;
+            }
             if (BlurBehindView.this.blurRadius <= 0.0f) {
                 this.invalidate();
                 return;
@@ -420,7 +455,9 @@ public class BlurBehindView extends RelativeLayout {
 
                 if (!this.isInEditMode()) {
                     // Log.i(TAG, "blur view print views behind initiated");
+                    BlurBehindView.BLUR_RENDER_TX = true;
                     boolean found = this.printViewsBehind((ViewGroup) this.getRootView());
+                    BlurBehindView.BLUR_RENDER_TX = false;
                     if (!found) {
                         Log.e(TAG, "blur view was rendered however all children were rendered (blur view was not found in the traversal)");
                     }
