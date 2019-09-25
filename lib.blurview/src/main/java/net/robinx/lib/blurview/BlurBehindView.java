@@ -232,12 +232,17 @@ public class BlurBehindView extends RelativeLayout {
                 this.blurCanvas.save();
                 rootView.getLocationOnScreen(this.childPositionInWindow);
                 this.blurCanvas.translate(
-                    (float) (this.childPositionInWindow[0] 
+                    (float) (
+                        this.childPositionInWindow[0] 
                         - this.thisPositionInWindow[0] 
-                        + this.halfPaddingOnSides), 
-                    (float) (this.halfPaddingOnSides 
+                        + this.halfPaddingOnSides
+                    ), 
+                    (float)(
+                        this.halfPaddingOnSides 
                         + this.childPositionInWindow[1] 
-                        - this.thisPositionInWindow[1]));
+                        - this.thisPositionInWindow[1]
+                    )
+                );
                 // TODO: it seems the a black background with opacity is rendered at 100% opacity
                 this.blurCanvas.scale(rootView.getScaleX(), rootView.getScaleY());
                 rootView.getBackground().draw(this.blurCanvas);
@@ -277,12 +282,17 @@ public class BlurBehindView extends RelativeLayout {
                     this.blurCanvas.save();
                     childView.getLocationOnScreen(this.childPositionInWindow);
                     this.blurCanvas.translate(
-                        (float) (this.halfPaddingOnSides 
+                        (float) (
+                            this.halfPaddingOnSides 
                             + this.childPositionInWindow[0] 
-                            - this.thisPositionInWindow[0]), 
-                        (float) (this.halfPaddingOnSides 
+                            - this.thisPositionInWindow[0]
+                        ),
+                        (float) (
+                            this.halfPaddingOnSides 
                             + this.childPositionInWindow[1] 
-                            - this.thisPositionInWindow[1]));
+                            - this.thisPositionInWindow[1]
+                        )
+                    );
                     this.blurCanvas.scale(childView.getScaleX(), childView.getScaleY());
                     childView.draw(this.blurCanvas);
                     this.blurCanvas.restore();
@@ -447,7 +457,7 @@ public class BlurBehindView extends RelativeLayout {
             }
             if (this.blurCanvas != null) {
                 this.blurCanvas.save();
-//                this.blurCanvas.drawColor(0, Mode.CLEAR);
+                // this.blurCanvas.drawColor(0, Mode.CLEAR);
                 this.blurCanvas.drawColor(Color.BLACK, Mode.SRC_OVER);
                 this.blurCanvas.scale(1.0F / BlurBehindView.this.sizeDivider, 1.0F / BlurBehindView.this.sizeDivider);
                 this.getLocationOnScreen(this.thisPositionInWindow);
