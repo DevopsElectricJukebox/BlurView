@@ -327,6 +327,9 @@ public class BlurBehindView extends RelativeLayout {
             if (this.isInEditMode()) {
                 canvas.drawColor(Color.TRANSPARENT);
             } else if (this.blurBitmap != null && BlurBehindView.this.blurRadius > 0.0F) {
+                if (BlurBehindView.this.updateMode == UPDATE_CONTINOUSLY) {
+                    this.drawToBitmap();
+                }
                 Paint paint = null;
                 if (BlurBehindView.this.clipCircleOutline == true || this.clipPath != null || this.roundPath != null) {
                     paint = new Paint();
@@ -362,9 +365,6 @@ public class BlurBehindView extends RelativeLayout {
                 }
                 
                 this.isInDrawPassFromThisView = false;
-                if (BlurBehindView.this.updateMode == UPDATE_CONTINOUSLY) {
-                    this.drawToBitmap();
-                }
             }
         }
 
