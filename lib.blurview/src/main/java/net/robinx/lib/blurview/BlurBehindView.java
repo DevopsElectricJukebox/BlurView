@@ -294,6 +294,7 @@ public class BlurBehindView extends RelativeLayout {
                         )
                     );
                     this.blurCanvas.scale(childView.getScaleX(), childView.getScaleY());
+                    // TODO: intersection of the draw rectangle vs. blur canvas
                     childView.draw(this.blurCanvas);
                     this.blurCanvas.restore();
                 }
